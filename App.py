@@ -1,8 +1,12 @@
+# ========================= PARTIE 1 =========================
+# Imports, configuration, CSS, fonctions de base et Supabase
+
 import streamlit as st
 import pandas as pd
 import json
 import io
 from datetime import datetime
+from supabase import create_client, Client
 
 st.set_page_config(
     page_title="Gestion de Classe",
@@ -11,7 +15,13 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# ── CSS ────────────────────────────────────────────────────────────────────────
+# ── Récupération des secrets Supabase ──────────────────────────────────
+# Assurez-vous que ces secrets sont définis dans Streamlit Cloud ou dans .streamlit/secrets.toml
+SUPABASE_URL = st.secrets["supabase_url"]
+SUPABASE_KEY = st.secrets["supabase_key"]
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+# ── CSS (identique à l'original) ────────────────────────────────────────
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap');
@@ -66,29 +76,81 @@ st.markdown("""
     padding-bottom:10px; margin-bottom:16px;
 }
 
-/* ── Student card ── */
-.student-row {
-    display:flex; align-items:center; justify-content:space-between;
-    background:#F8FAFA; border:1px solid var(--border); border-radius:12px;
-    padding:12px 16px; margin-bottom:8px; gap:10px; flex-wrap:wrap;
+/* Cartes étudiant */
+.student-card {
+    background: #FFFFFF;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    transition: box-shadow 0.2s;
 }
-.student-name { font-weight:800; font-size:15px; color:var(--text); flex:1; min-width:150px; }
-.student-score {
-    font-size:28px; font-weight:900; color:var(--teal2);
-    min-width:50px; text-align:center;
+.student-card:hover {
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
 }
-.score-pos { color:#2E7D32; }
-.score-neg { color:var(--red); }
-.score-zero { color:var(--muted); }
-.badge-mention {
-    display:inline-block; padding:3px 12px; border-radius:20px;
-    font-size:11px; font-weight:800; letter-spacing:0.5px;
+
+/* Nom en grand */
+.student-name-large {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--teal2);
+    margin-bottom: 6px;
 }
-.m-tb  { background:#E8F5E9; color:#1B5E20; border:1px solid #A5D6A7; }
-.m-b   { background:#E3F2FD; color:#0D47A1; border:1px solid #90CAF9; }
-.m-ab  { background:#FFF8E1; color:#7B5800; border:1px solid #FFE082; }
-.m-p   { background:#FFF3E0; color:#E65100; border:1px solid #FFCC80; }
-.m-ec  { background:#FFEBEE; color:#B71C1C; border:1px solid #EF9A9A; }
+
+/* Score + mention */
+.student-score-large {
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--teal2);
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+.mention-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 30px;
+    font-size: 12px;
+    font-weight: 800;
+    background: #E0F2F1;
+    color: #00796B;
+}
+.mention-badge.m-tb { background: #E8F5E9; color: #1B5E20; }
+.mention-badge.m-b  { background: #E3F2FD; color: #0D47A1; }
+.mention-badge.m-ab { background: #FFF8E1; color: #7B5800; }
+.mention-badge.m-p  { background: #FFF3E0; color: #E65100; }
+.mention-badge.m-ec { background: #FFEBEE; color: #B71C1C; }
+
+/* Dernières notes */
+.recent-notes {
+    margin: 8px 0;
+    font-size: 12px;
+    color: var(--muted);
+}
+.note-badge {
+    display: inline-block;
+    background: #F5F5F5;
+    border-radius: 20px;
+    padding: 2px 8px;
+    margin-right: 5px;
+    font-weight: 700;
+}
+.note-badge.note-1  { background: #C8E6C9; color: #1B5E20; }
+.note-badge.note-0  { background: #E0E0E0; color: #757575; }
+.note-badge.note--1 { background: #FFCDD2; color: #C62828; }
+
+/* Tendances */
+.trend {
+    font-size: 13px;
+    font-weight: 600;
+    margin-top: 6px;
+}
+.trend-up      { color: #2E7D32; }
+.trend-down    { color: #C62828; }
+.trend-stable  { color: #FF8F00; }
 
 /* ── Boutons note ── */
 .stButton > button {
@@ -142,24 +204,7 @@ hr { border-color:var(--border) !important; margin:16px 0 !important; }
 </style>
 """, unsafe_allow_html=True)
 
-# ── Storage helpers ────────────────────────────────────────────────────────────
-STORAGE_KEY = "classes_db"
-
-def load_db():
-    """Charge la base depuis Streamlit storage."""
-    try:
-        raw = st.query_params.get("_db_bypass", None)
-        data = st.session_state.get("__db__", None)
-        if data is None:
-            return {}
-        return json.loads(data) if isinstance(data, str) else data
-    except Exception:
-        return {}
-
-def save_db(db):
-    """Sauvegarde la base dans session_state (persisté via query params trick)."""
-    st.session_state["__db__"] = db
-
+# ── Fonctions utilitaires ──────────────────────────────────────────────
 def get_mention(score):
     if score >= 16:   return "Très Bien",  "m-tb"
     elif score >= 14: return "Bien",        "m-b"
@@ -167,17 +212,51 @@ def get_mention(score):
     elif score >= 10: return "Passable",    "m-p"
     else:             return "Echec",       "m-ec"
 
-# ── Init session state ─────────────────────────────────────────────────────────
-if "__db__" not in st.session_state:
-    st.session_state["__db__"] = {}
+def load_db():
+    """Charge toutes les classes depuis Supabase."""
+    try:
+        response = supabase.table("classes").select("*").execute()
+        db = {}
+        for row in response.data:
+            db[row["id"]] = row["data"]
+        return db
+    except Exception as e:
+        st.error(f"Erreur de chargement des données : {e}")
+        return {}
+
+def save_db(db):
+    """Sauvegarde toutes les classes dans Supabase."""
+    try:
+        for class_id, class_data in db.items():
+            # Vérifier si la classe existe déjà
+            existing = supabase.table("classes").select("id").eq("id", class_id).execute()
+            if existing.data:
+                # Mise à jour
+                supabase.table("classes").update({"data": class_data}).eq("id", class_id).execute()
+            else:
+                # Insertion
+                supabase.table("classes").insert({"id": class_id, "data": class_data}).execute()
+        # Optionnel : suppression des classes qui ne sont plus dans le dictionnaire (nettoyage)
+        # Récupérer tous les IDs existants en base
+        all_ids = {row["id"] for row in supabase.table("classes").select("id").execute().data}
+        for class_id in all_ids - set(db.keys()):
+            supabase.table("classes").delete().eq("id", class_id).execute()
+    except Exception as e:
+        st.error(f"Erreur de sauvegarde : {e}")
+# ========================= PARTIE 2 =========================
+# Header, sidebar, initialisation session, onglets Accueil et Créer une classe
+
+# ── Initialisation de la session ───────────────────────────────────────
+if "db" not in st.session_state:
+    st.session_state.db = load_db()
 if "selected_class" not in st.session_state:
     st.session_state.selected_class = None
 if "confirm_delete" not in st.session_state:
     st.session_state.confirm_delete = None
 
-db = st.session_state["__db__"]
+db = st.session_state.db  # alias local
 
-# ── HEADER ─────────────────────────────────────────────────────────────────────
+# ── HEADER ──────────────────────────────────────────────────────────────
 st.markdown("""
 <div class="app-header">
     <div class="app-tag">Outil Pédagogique</div>
@@ -186,7 +265,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ── SIDEBAR : liste des classes ────────────────────────────────────────────────
+# ── SIDEBAR : liste des classes ─────────────────────────────────────────
 with st.sidebar:
     st.markdown("### 📂 Mes Classes")
     if db:
@@ -202,12 +281,12 @@ with st.sidebar:
         st.session_state.selected_class = "new"
         st.rerun()
 
-# ── TABS PRINCIPAL ──────────────────────────────────────────────────────────────
+# ── TABS PRINCIPAL ──────────────────────────────────────────────────────
 tab_home, tab_new, tab_class = st.tabs(["🏠 Accueil", "➕ Créer une classe", "📋 Gérer la classe"])
 
-# ══════════════════════════════════════════════════════
+# ════════════════════════════════════════════════════════════════════════
 # TAB ACCUEIL
-# ══════════════════════════════════════════════════════
+# ════════════════════════════════════════════════════════════════════════
 with tab_home:
     if not db:
         st.markdown("""
@@ -256,9 +335,9 @@ with tab_home:
             )
         st.markdown('</div>', unsafe_allow_html=True)
 
-# ══════════════════════════════════════════════════════
+# ════════════════════════════════════════════════════════════════════════
 # TAB CRÉER UNE CLASSE
-# ══════════════════════════════════════════════════════
+# ════════════════════════════════════════════════════════════════════════
 with tab_new:
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown('<div class="card-title">➕ Nouvelle Classe</div>', unsafe_allow_html=True)
@@ -272,47 +351,18 @@ with tab_new:
     st.markdown("**Liste des étudiants**")
     methode = st.radio("Méthode de saisie", ["Saisie manuelle", "Import Excel/CSV"], horizontal=True)
 
-    # Init liste en session
-    if "new_etudiants_list" not in st.session_state:
-        st.session_state.new_etudiants_list = []
-
     etudiants_input = []
 
     if methode == "Saisie manuelle":
-        col_inp, col_btn = st.columns([4, 1])
-        with col_inp:
-            nom_etud = st.text_input("Nom de l'étudiant", key="nom_etud_input",
-                                     placeholder="ex: Ahmed Benali")
-        with col_btn:
-            st.markdown("<br>", unsafe_allow_html=True)
-            if st.button("➕ Ajouter", key="btn_add_etud"):
-                if nom_etud.strip():
-                    if nom_etud.strip() not in st.session_state.new_etudiants_list:
-                        st.session_state.new_etudiants_list.append(nom_etud.strip())
-                    st.rerun()
-
-        # Afficher la liste ajoutée
-        if st.session_state.new_etudiants_list:
-            st.markdown(
-                '<div style="background:#E0F2F1;border-radius:12px;padding:14px 18px;'
-                'border-left:4px solid #00796B;margin-top:8px">'
-                '<b style="color:#004D40">👥 ' + str(len(st.session_state.new_etudiants_list))
-                + ' étudiants ajoutés :</b><br><br>'
-                + ''.join([
-                    '<span style="display:inline-block;background:white;border:1px solid #C8D8D5;'
-                    'border-radius:20px;padding:3px 12px;margin:3px;font-size:13px;font-weight:600">'
-                    + n + '</span>'
-                    for n in st.session_state.new_etudiants_list
-                ])
-                + '</div>',
-                unsafe_allow_html=True
-            )
-            if st.button("🗑️ Vider la liste", key="clear_list"):
-                st.session_state.new_etudiants_list = []
-                st.rerun()
-
-        etudiants_input = st.session_state.new_etudiants_list.copy()
-
+        nb_students = st.number_input("Nombre d'étudiants", min_value=1, max_value=60, value=5, step=1)
+        st.markdown("*Saisissez un nom par ligne :*")
+        noms_text = st.text_area(
+            "Noms des étudiants (un par ligne)",
+            height=max(120, int(nb_students) * 22),
+            placeholder="Ahmed Benali\nFatima Zahra\nYoussef Alami\n..."
+        )
+        if noms_text.strip():
+            etudiants_input = [n.strip() for n in noms_text.strip().split("\n") if n.strip()]
     else:
         uploaded_list = st.file_uploader("Fichier Excel ou CSV (1 colonne = noms)", type=["xlsx","xls","csv"])
         if uploaded_list:
@@ -331,16 +381,7 @@ with tab_new:
                         etudiants_input = vals.tolist()
                         break
                 st.success(f"✅ {len(etudiants_input)} étudiants détectés")
-                # Afficher aperçu
-                st.markdown(
-                    '<div style="background:#E0F2F1;border-radius:12px;padding:14px;margin-top:8px">'
-                    + ''.join(['<span style="display:inline-block;background:white;border:1px solid #C8D8D5;'
-                    'border-radius:20px;padding:3px 12px;margin:3px;font-size:13px">'
-                    + n + '</span>' for n in etudiants_input[:8]])
-                    + ('...' if len(etudiants_input) > 8 else '')
-                    + '</div>',
-                    unsafe_allow_html=True
-                )
+                st.write(etudiants_input[:5])
             except Exception as e:
                 st.error(f"Erreur : {e}")
 
@@ -372,18 +413,19 @@ with tab_new:
                         for i, nom in enumerate(etudiants_input)
                     }
                 }
-                save_db(db)
+                save_db(db)  # ← Sauvegarde immédiate
                 st.session_state.selected_class = cid
-                st.session_state.new_etudiants_list = []
                 st.success(f"✅ Classe '{nom_classe}' créée avec {len(etudiants_input)} étudiants !")
                 st.balloons()
                 st.rerun()
 
     st.markdown('</div>', unsafe_allow_html=True)
+# ========================= PARTIE 3 =========================
+# Onglet Gérer la classe et footer
 
-# ══════════════════════════════════════════════════════
+# ════════════════════════════════════════════════════════════════════════
 # TAB GÉRER LA CLASSE
-# ══════════════════════════════════════════════════════
+# ════════════════════════════════════════════════════════════════════════
 with tab_class:
     if not db:
         st.info("Aucune classe disponible. Créez-en une d'abord.")
@@ -447,67 +489,94 @@ with tab_class:
                         "note": note_globale, "motif": motif_global,
                         "date": ts, "type": "global"
                     })
-                save_db(db)
+                save_db(db)  # ← Sauvegarde
                 st.success(f"✅ Note {'+1' if note_globale==1 else ('-1' if note_globale==-1 else '0')} appliquée à toute la classe !")
                 st.rerun()
 
             st.markdown("---")
             st.markdown("**Notes individuelles**")
 
+            # Afficher chaque étudiant avec une carte
             for eid, etudiant in sorted(etudiants.items(), key=lambda x: x[1]["nom"]):
-                score    = etudiant["score"]
+                score = etudiant["score"]
                 mention, m_cls = get_mention(score)
-                sc_color = "#2E7D32" if score > 0 else ("#C62828" if score < 0 else "#546E6A")
-                pbar_pct = min(100, max(0, (score + 20) / 40 * 100))  # score -20..+20 → 0..100%
-                pbar_cls = "prog-up" if score > 0 else ("prog-down" if score < 0 else "prog-flat")
 
-                # Carte étudiant style app précédente
-                st.markdown(
-                    '<div style="background:#F8FAFA;border:1px solid #C8D8D5;border-radius:12px;'
-                    'padding:12px 16px;margin-bottom:8px">'
-                    '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">'
-                    '<div style="flex:1;min-width:140px">'
-                    '<div style="font-weight:800;font-size:15px;color:#1A2E2A">' + etudiant["nom"] + '</div>'
-                    '<div class="prog-bar-wrap"><div class="prog-bar ' + pbar_cls + '" style="width:' + str(pbar_pct) + '%"></div></div>'
-                    '</div>'
-                    '<div style="text-align:right">'
-                    '<div style="font-size:28px;font-weight:900;color:' + sc_color + '">' + str(score)
-                    + '</div>'
-                    '<span class="badge-mention ' + m_cls + '">' + mention + '</span>'
-                    '</div>'
-                    '</div>'
-                    '</div>',
-                    unsafe_allow_html=True
-                )
+                # Calcul de la tendance
+                historique = etudiant["historique"]
+                last_notes = [h["note"] for h in historique[-3:]] if historique else []
+                net_change = sum(last_notes)
+                if net_change > 0:
+                    trend = "📈 En progression"
+                    trend_class = "trend-up"
+                elif net_change < 0:
+                    trend = "📉 En baisse"
+                    trend_class = "trend-down"
+                else:
+                    trend = "➡️ Stable"
+                    trend_class = "trend-stable"
 
-                # Boutons +1 / 0 / -1 + motif sur la même ligne
-                cb1, cb2, cb3, cb4 = st.columns([1, 1, 1, 4])
-                with cb1:
-                    if st.button("+1", key=f"p_{eid}", type="primary"):
-                        motif = st.session_state.get(f"motif_{eid}", "")
-                        ts = datetime.now().strftime("%d/%m/%Y %H:%M")
-                        etudiants[eid]["score"] += 1
-                        etudiants[eid]["historique"].append({"note":1,"motif":motif,"date":ts,"type":"indiv"})
-                        save_db(db)
-                        st.rerun()
-                with cb2:
-                    if st.button(" 0 ", key=f"z_{eid}"):
-                        motif = st.session_state.get(f"motif_{eid}", "")
-                        ts = datetime.now().strftime("%d/%m/%Y %H:%M")
-                        etudiants[eid]["historique"].append({"note":0,"motif":motif,"date":ts,"type":"indiv"})
-                        save_db(db)
-                        st.rerun()
-                with cb3:
-                    if st.button("-1", key=f"m_{eid}"):
-                        motif = st.session_state.get(f"motif_{eid}", "")
-                        ts = datetime.now().strftime("%d/%m/%Y %H:%M")
-                        etudiants[eid]["score"] -= 1
-                        etudiants[eid]["historique"].append({"note":-1,"motif":motif,"date":ts,"type":"indiv"})
-                        save_db(db)
-                        st.rerun()
-                with cb4:
-                    st.text_input("Motif", key=f"motif_{eid}", label_visibility="collapsed",
-                                  placeholder="Motif (ex: Retard, Participation...)")
+                st.markdown('<div class="student-card">', unsafe_allow_html=True)
+
+                col_left, col_right = st.columns([2, 1])
+
+                with col_left:
+                    st.markdown(f'<div class="student-name-large">{etudiant["nom"]}</div>', unsafe_allow_html=True)
+                    st.markdown(
+                        f'<div class="student-score-large">{score} '
+                        f'<span class="mention-badge {m_cls}">{mention}</span></div>',
+                        unsafe_allow_html=True
+                    )
+
+                    if last_notes:
+                        badges = []
+                        for n in last_notes:
+                            if n > 0:
+                                badges.append(f'<span class="note-badge note-1">+{n}</span>')
+                            elif n == 0:
+                                badges.append(f'<span class="note-badge note-0">0</span>')
+                            else:
+                                badges.append(f'<span class="note-badge note--1">{n}</span>')
+                        st.markdown(
+                            f'<div class="recent-notes">Dernières notes : {" ".join(badges)}</div>',
+                            unsafe_allow_html=True
+                        )
+
+                    st.markdown(f'<div class="trend {trend_class}">{trend}</div>', unsafe_allow_html=True)
+
+                with col_right:
+                    btns = st.columns(3)
+                    with btns[0]:
+                        if st.button("➕ +1", key=f"p_{eid}", use_container_width=True):
+                            motif = st.session_state.get(f"motif_{eid}", "")
+                            ts = datetime.now().strftime("%d/%m/%Y %H:%M")
+                            etudiants[eid]["score"] += 1
+                            etudiants[eid]["historique"].append({"note":1,"motif":motif,"date":ts,"type":"indiv"})
+                            save_db(db)
+                            st.rerun()
+                    with btns[1]:
+                        if st.button("⓪ 0", key=f"z_{eid}", use_container_width=True):
+                            motif = st.session_state.get(f"motif_{eid}", "")
+                            ts = datetime.now().strftime("%d/%m/%Y %H:%M")
+                            etudiants[eid]["historique"].append({"note":0,"motif":motif,"date":ts,"type":"indiv"})
+                            save_db(db)
+                            st.rerun()
+                    with btns[2]:
+                        if st.button("➖ -1", key=f"m_{eid}", use_container_width=True):
+                            motif = st.session_state.get(f"motif_{eid}", "")
+                            ts = datetime.now().strftime("%d/%m/%Y %H:%M")
+                            etudiants[eid]["score"] -= 1
+                            etudiants[eid]["historique"].append({"note":-1,"motif":motif,"date":ts,"type":"indiv"})
+                            save_db(db)
+                            st.rerun()
+
+                    st.text_input(
+                        "Motif",
+                        key=f"motif_{eid}",
+                        label_visibility="collapsed",
+                        placeholder="Motif (optionnel)"
+                    )
+
+                st.markdown('</div>', unsafe_allow_html=True)
 
             st.markdown('</div>', unsafe_allow_html=True)
 
@@ -556,7 +625,7 @@ with tab_class:
             st.markdown(table_html, unsafe_allow_html=True)
             st.markdown("---")
 
-            # Export
+            # Export Excel et PDF (identique à l'original)
             dl1, dl2 = st.columns(2)
             with dl1:
                 st.markdown('<div class="dl-excel">', unsafe_allow_html=True)
@@ -715,6 +784,10 @@ with tab_class:
                 st.markdown('</div>', unsafe_allow_html=True)
 
             st.markdown('</div>', unsafe_allow_html=True)
+
+        # ── SOUS-TAB 3 : Historique ─────────────────────────────────────
+        # ========================= PARTIE 3b =========================
+# Onglet Gérer la classe – Historique, Gérer et Footer
 
         # ── SOUS-TAB 3 : Historique ─────────────────────────────────────
         with stab3:
