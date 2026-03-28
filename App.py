@@ -292,22 +292,20 @@ with tab_class:
             st.markdown("---")
             st.markdown("**Notes individuelles**")
 
-            # Affichage des étudiants avec carte simplifiée
             for eid, etudiant in sorted(etudiants.items(), key=lambda x: x[1]["nom"]):
                 score = etudiant["score"]
                 mention, m_cls = get_mention(score)
 
-                # Carte en flex
                 st.markdown('<div class="student-card">', unsafe_allow_html=True)
 
-                # Partie gauche : informations
+                # Informations
                 st.markdown('<div class="student-info">', unsafe_allow_html=True)
                 st.markdown(f'<span class="student-name">{etudiant["nom"]}</span>', unsafe_allow_html=True)
                 st.markdown(f'<span class="student-score">{score}</span>', unsafe_allow_html=True)
                 st.markdown(f'<span class="mention-badge {m_cls}">{mention}</span>', unsafe_allow_html=True)
-                st.markdown('</div>', unsafe_allow_html=True)  # fermeture student-info
+                st.markdown('</div>', unsafe_allow_html=True)
 
-                # Partie droite : deux colonnes pour les boutons
+                # Boutons côte à côte
                 col_btn1, col_btn2 = st.columns(2)
                 with col_btn1:
                     if st.button("➕ +1", key=f"p_{eid}", use_container_width=True):
@@ -324,7 +322,7 @@ with tab_class:
                         save_db(db)
                         st.rerun()
 
-                st.markdown('</div>', unsafe_allow_html=True)  # fermeture student-card
+                st.markdown('</div>', unsafe_allow_html=True)
 
             st.markdown('</div>', unsafe_allow_html=True)
 # ========================= PARTIE 3b =========================
@@ -372,7 +370,7 @@ with tab_class:
             st.markdown(table_html, unsafe_allow_html=True)
             st.markdown("---")
 
-            # Export Excel et PDF (simplifié – inchangé)
+            # Export Excel et PDF (simplifié)
             dl1, dl2 = st.columns(2)
             with dl1:
                 st.markdown('<div class="dl-excel">', unsafe_allow_html=True)
