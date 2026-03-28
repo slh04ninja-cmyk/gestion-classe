@@ -83,13 +83,13 @@ with st.sidebar:
     if db:
         for cid, cls in db.items():
             label = cls["nom"] + " — " + cls["annee"]
-            if st.button(label, key=f"sel_{cid}", use_container_width=True):
+            if st.button(label, key=f"sel_{cid}", width="stretch"):
                 st.session_state.selected_class = cid
                 st.rerun()
     else:
         st.info("Aucune classe créée.")
     st.markdown("---")
-    if st.button("➕ Nouvelle classe", use_container_width=True):
+    if st.button("➕ Nouvelle classe", width="stretch"):
         st.session_state.selected_class = "new"
         st.rerun()
 
@@ -266,13 +266,13 @@ with tab_class:
             col_g1, col_g2, col_g3, col_g4 = st.columns([1,1,1,3])
             note_globale = None
             with col_g1:
-                if st.button("➕ +1 Classe", key="g_plus"):
+                if st.button("➕ +1 Classe", key="g_plus", width="stretch"):
                     note_globale = 1
             with col_g2:
-                if st.button("➖ -1 Classe", key="g_moins"):
+                if st.button("➖ -1 Classe", key="g_moins", width="stretch"):
                     note_globale = -1
             with col_g3:
-                pass  # alignement
+                pass
             with col_g4:
                 motif_global = st.text_input("Motif (optionnel)", key="motif_global",
                                              placeholder="ex: Participation active, Retard...")
@@ -308,14 +308,14 @@ with tab_class:
                 # Boutons côte à côte
                 col_btn1, col_btn2 = st.columns(2)
                 with col_btn1:
-                    if st.button("➕ +1", key=f"p_{eid}", use_container_width=True):
+                    if st.button("➕ +1", key=f"p_{eid}", width="stretch"):
                         ts = datetime.now().strftime("%d/%m/%Y %H:%M")
                         etudiants[eid]["score"] += 1
                         etudiants[eid]["historique"].append({"note":1, "motif": "", "date": ts, "type": "indiv"})
                         save_db(db)
                         st.rerun()
                 with col_btn2:
-                    if st.button("➖ -1", key=f"m_{eid}", use_container_width=True):
+                    if st.button("➖ -1", key=f"m_{eid}", width="stretch"):
                         ts = datetime.now().strftime("%d/%m/%Y %H:%M")
                         etudiants[eid]["score"] -= 1
                         etudiants[eid]["historique"].append({"note":-1, "motif": "", "date": ts, "type": "indiv"})
@@ -351,8 +351,8 @@ with tab_class:
                     '<td style="text-align:center"><span style="background:white;border-radius:12px;'
                     'padding:2px 10px;font-size:11px;font-weight:700">' + mention + '</span></td>'
                     '<td style="text-align:center;color:#546E6A;font-size:12px">'
-                    + str(len(e["historique"])) + ' opérations</td>'
-                    '</tr>'
+                    + str(len(e["historique"])) + ' opérations』
+                    '|\n                '
                 )
 
             table_html = (
@@ -363,14 +363,14 @@ with tab_class:
                 '<th style="padding:10px 6px">Score</th>'
                 '<th style="padding:10px 6px">Mention</th>'
                 '<th style="padding:10px 6px">Historique</th>'
-                '</tr></thead>'
+                '|\n                </thead>'
                 '<tbody>' + rows_html + '</tbody>'
-                '</table>'
+                '|\n            </table>'
             )
             st.markdown(table_html, unsafe_allow_html=True)
             st.markdown("---")
 
-            # Export Excel et PDF (simplifié)
+            # Export Excel et PDF (inchangé)
             dl1, dl2 = st.columns(2)
             with dl1:
                 st.markdown('<div class="dl-excel">', unsafe_allow_html=True)
