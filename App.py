@@ -272,8 +272,7 @@ with tab_class:
                 if st.button("➖ -1 Classe", key="g_moins"):
                     note_globale = -1
             with col_g3:
-                # Placeholder pour alignement
-                pass
+                pass  # alignement
             with col_g4:
                 motif_global = st.text_input("Motif (optionnel)", key="motif_global",
                                              placeholder="ex: Participation active, Retard...")
@@ -300,13 +299,15 @@ with tab_class:
 
                 # Carte en flex
                 st.markdown('<div class="student-card">', unsafe_allow_html=True)
+
+                # Partie gauche : informations
                 st.markdown('<div class="student-info">', unsafe_allow_html=True)
                 st.markdown(f'<span class="student-name">{etudiant["nom"]}</span>', unsafe_allow_html=True)
                 st.markdown(f'<span class="student-score">{score}</span>', unsafe_allow_html=True)
                 st.markdown(f'<span class="mention-badge {m_cls}">{mention}</span>', unsafe_allow_html=True)
-                st.markdown('</div>', unsafe_allow_html=True)
+                st.markdown('</div>', unsafe_allow_html=True)  # fermeture student-info
 
-                # Boutons +1 et -1 côte à côte
+                # Partie droite : deux colonnes pour les boutons
                 col_btn1, col_btn2 = st.columns(2)
                 with col_btn1:
                     if st.button("➕ +1", key=f"p_{eid}", use_container_width=True):
@@ -323,7 +324,7 @@ with tab_class:
                         save_db(db)
                         st.rerun()
 
-                st.markdown('</div>', unsafe_allow_html=True)
+                st.markdown('</div>', unsafe_allow_html=True)  # fermeture student-card
 
             st.markdown('</div>', unsafe_allow_html=True)
 # ========================= PARTIE 3b =========================
@@ -371,7 +372,7 @@ with tab_class:
             st.markdown(table_html, unsafe_allow_html=True)
             st.markdown("---")
 
-            # Export Excel et PDF (identique à l'original, non modifié)
+            # Export Excel et PDF (simplifié – inchangé)
             dl1, dl2 = st.columns(2)
             with dl1:
                 st.markdown('<div class="dl-excel">', unsafe_allow_html=True)
