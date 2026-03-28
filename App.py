@@ -351,8 +351,8 @@ with tab_class:
                     '<td style="text-align:center"><span style="background:white;border-radius:12px;'
                     'padding:2px 10px;font-size:11px;font-weight:700">' + mention + '</span></td>'
                     '<td style="text-align:center;color:#546E6A;font-size:12px">'
-                    + str(len(e["historique"])) + ' opérations』
-                    '|\n                '
+                    + str(len(e["historique"])) + ' opérations</td>'
+                    '</tr>'
                 )
 
             table_html = (
@@ -363,14 +363,14 @@ with tab_class:
                 '<th style="padding:10px 6px">Score</th>'
                 '<th style="padding:10px 6px">Mention</th>'
                 '<th style="padding:10px 6px">Historique</th>'
-                '|\n                </thead>'
+                '</tr></thead>'
                 '<tbody>' + rows_html + '</tbody>'
-                '|\n            </table>'
+                '</table>'
             )
             st.markdown(table_html, unsafe_allow_html=True)
             st.markdown("---")
 
-            # Export Excel et PDF (inchangé)
+            # Export Excel et PDF
             dl1, dl2 = st.columns(2)
             with dl1:
                 st.markdown('<div class="dl-excel">', unsafe_allow_html=True)
