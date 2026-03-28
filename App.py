@@ -1,6 +1,4 @@
 # ========================= PARTIE 1 =========================
-# Imports, CSS amélioré, fonctions de base et Supabase
-
 import streamlit as st
 import pandas as pd
 import json
@@ -25,7 +23,7 @@ except KeyError as e:
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# ── CSS amélioré (inspiré de l'image) ────────────────────────────────────
+# ── CSS amélioré (sans ajout d'éléments) ─────────────────────────────────
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
@@ -37,7 +35,6 @@ st.markdown("""
     --gold:    #FF8F00;
     --red:     #C62828;
     --green:   #2E7D32;
-    --blue:    #1565C0;
     --bg:      #F4F7F6;
     --card:    #FFFFFF;
     --text:    #1A2E2A;
@@ -69,7 +66,7 @@ st.markdown("""
 .app-title { font-size:30px; font-weight:900; color:#fff; line-height:1.1; margin:0; }
 .app-sub   { font-size:13px; color:rgba(255,255,255,0.6); margin-top:6px; }
 
-/* ── Cards ── */
+/* ── Cards générales ── */
 .card {
     background: var(--card); border: 1px solid var(--border);
     border-radius: 16px; padding: 24px; margin-bottom: 16px;
@@ -81,7 +78,7 @@ st.markdown("""
     padding-bottom:10px; margin-bottom:16px;
 }
 
-/* Cartes étudiant (style image) */
+/* ── Cartes étudiant (style amélioré) ── */
 .student-card {
     background: #FFFFFF;
     border-radius: 20px;
@@ -96,110 +93,72 @@ st.markdown("""
     transform: translateY(-2px);
 }
 
-/* En-tête de carte : nom + badges */
-.card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 12px;
-    flex-wrap: wrap;
-}
-.student-name {
+.student-name-large {
     font-size: 20px;
     font-weight: 800;
     color: var(--teal2);
-    margin: 0;
+    margin-bottom: 8px;
 }
-.trend-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
+
+.student-score-large {
+    font-size: 32px;
+    font-weight: 900;
+    color: var(--teal2);
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+.mention-badge {
+    display: inline-block;
     padding: 4px 12px;
     border-radius: 30px;
     font-size: 12px;
-    font-weight: 700;
-    background: #F5F5F5;
+    font-weight: 800;
+    background: #E0F2F1;
+    color: #00796B;
 }
-.trend-up {
-    background: #E8F5E9;
-    color: #2E7D32;
-}
-.trend-down {
-    background: #FFEBEE;
-    color: #C62828;
-}
-.trend-stable {
-    background: #FFF8E1;
-    color: #FF8F00;
-}
+.mention-badge.m-tb { background: #E8F5E9; color: #1B5E20; }
+.mention-badge.m-b  { background: #E3F2FD; color: #0D47A1; }
+.mention-badge.m-ab { background: #FFF8E1; color: #7B5800; }
+.mention-badge.m-p  { background: #FFF3E0; color: #E65100; }
+.mention-badge.m-ec { background: #FFEBEE; color: #B71C1C; }
 
-/* Ligne des notes D1 D2 D3 */
-.notes-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+/* Dernières notes sous forme de badges */
+.recent-notes {
     margin: 12px 0;
-    flex-wrap: wrap;
+    font-size: 12px;
+    color: var(--muted);
 }
-.note-item {
-    background: #F8FAFA;
-    border-radius: 12px;
-    padding: 6px 12px;
-    font-size: 13px;
+.note-badge {
+    display: inline-block;
+    background: #F5F5F5;
+    border-radius: 20px;
+    padding: 4px 10px;
+    margin-right: 6px;
     font-weight: 700;
-    color: var(--teal2);
-    border: 1px solid var(--border);
+    font-size: 12px;
 }
-.arrow {
-    font-size: 16px;
-    color: var(--gold);
-}
-.act-prog {
-    display: flex;
-    gap: 16px;
-    margin: 8px 0;
+.note-badge.note-1  { background: #C8E6C9; color: #1B5E20; }
+.note-badge.note-0  { background: #E0E0E0; color: #757575; }
+.note-badge.note--1 { background: #FFCDD2; color: #C62828; }
+
+/* Tendances */
+.trend {
     font-size: 13px;
     font-weight: 600;
-}
-.act {
-    background: var(--mint);
-    padding: 4px 12px;
-    border-radius: 20px;
-}
-.prog {
-    color: var(--green);
-}
-.prog.negative {
-    color: var(--red);
-}
-
-/* Score final */
-.score-final {
-    font-size: 28px;
-    font-weight: 900;
-    color: var(--teal2);
-    margin: 8px 0;
-}
-.mention {
-    font-size: 13px;
-    font-weight: 700;
+    margin: 8px 0 12px;
+    display: inline-block;
     padding: 4px 12px;
     border-radius: 30px;
-    background: #E0F2F1;
-    display: inline-block;
+    background: #F5F5F5;
 }
-.mention.m-tb { background: #E8F5E9; color: #1B5E20; }
-.mention.m-b  { background: #E3F2FD; color: #0D47A1; }
-.mention.m-ab { background: #FFF8E1; color: #7B5800; }
-.mention.m-p  { background: #FFF3E0; color: #E65100; }
-.mention.m-ec { background: #FFEBEE; color: #B71C1C; }
+.trend-up      { background: #E8F5E9; color: #2E7D32; }
+.trend-down    { background: #FFEBEE; color: #C62828; }
+.trend-stable  { background: #FFF8E1; color: #FF8F00; }
 
-/* Boutons de note */
-.btn-group {
-    display: flex;
-    gap: 8px;
-    margin-top: 12px;
-}
+/* Boutons de note dans la colonne droite */
 .btn-group .stButton button {
     border-radius: 40px !important;
     font-weight: 800 !important;
@@ -211,7 +170,6 @@ st.markdown("""
 .btn-zero { background-color: #757575 !important; color: white !important; }
 .btn-moins { background-color: var(--red) !important; color: white !important; }
 
-/* Motif */
 .motif-input {
     margin-top: 8px;
 }
@@ -219,17 +177,50 @@ st.markdown("""
     font-size: 12px !important;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-    .notes-row { gap: 4px; }
-    .note-item { font-size: 11px; padding: 4px 8px; }
-    .student-name { font-size: 18px; }
-    .score-final { font-size: 24px; }
-}
+/* ── Le reste des styles (tabs, métriques, etc.) ── */
+/* (on conserve les styles précédents pour les onglets, métriques, etc.) */
 
-/* Le reste des styles (tabs, métriques, etc.) est conservé */
-/* ... (copier ici les styles existants pour les tabs, metrics, etc.) ... */
-/* Pour éviter la répétition, je ne recopie pas tout, mais dans la version finale, il faut inclure les styles précédents */
+/* Tabs */
+.stTabs [data-baseweb="tab-list"] {
+    background: var(--mint); border-radius:12px; padding:4px; gap:4px;
+    border:none; margin-bottom:16px;
+}
+.stTabs [data-baseweb="tab"] {
+    border-radius:8px; font-weight:800; font-size:13px; color:var(--muted);
+    padding:9px 18px; border:none; background:transparent;
+}
+.stTabs [aria-selected="true"] { background:var(--teal) !important; color:white !important; }
+.stTabs [data-baseweb="tab-border"] { display:none; }
+
+/* Inputs */
+.stTextInput input, .stSelectbox select, .stNumberInput input {
+    border-radius:8px !important; border-color:var(--border) !important;
+    color:var(--text) !important; background:#fff !important;
+    font-weight:600 !important;
+}
+.stTextInput label, .stSelectbox label, .stNumberInput label,
+.stTextArea label { font-weight:700 !important; color:var(--text) !important; }
+
+/* Download buttons */
+.stDownloadButton > button {
+    background:white !important; border-radius:10px !important;
+    font-weight:700 !important; font-size:13px !important; width:100%; margin-top:6px;
+}
+.dl-excel .stDownloadButton > button { color:var(--teal) !important; border:2px solid var(--teal) !important; }
+.dl-pdf   .stDownloadButton > button { color:var(--red) !important;  border:2px solid var(--red)  !important; }
+
+/* Metrics */
+[data-testid="metric-container"] {
+    background:var(--mint); border-radius:10px; padding:12px 16px !important; border:1px solid var(--border);
+}
+[data-testid="stMetricLabel"] p  { color:#333 !important; font-weight:700 !important; font-size:12px !important; }
+[data-testid="stMetricValue"] div{ color:var(--teal2) !important; font-weight:900 !important; font-size:22px !important; }
+
+hr { border-color:var(--border) !important; margin:16px 0 !important; }
+.app-footer { text-align:center; padding:16px; color:var(--muted); font-size:11px; margin-top:24px; border-top:1px solid var(--border); }
+.badge { display:inline-block; background:var(--mint); color:var(--teal2); font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px; border:1px solid var(--border); }
+#MainMenu, footer, header { visibility:hidden; }
+.block-container { padding-top:2rem; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -242,7 +233,6 @@ def get_mention(score):
     else:             return "Echec",       "m-ec"
 
 def load_db():
-    """Charge toutes les classes depuis Supabase."""
     try:
         response = supabase.table("classes").select("*").execute()
         db = {}
@@ -250,11 +240,10 @@ def load_db():
             db[row["id"]] = row["data"]
         return db
     except Exception as e:
-        st.error(f"Erreur de chargement des données : {e}")
+        st.error(f"Erreur de chargement : {e}")
         return {}
 
 def save_db(db):
-    """Sauvegarde toutes les classes dans Supabase."""
     try:
         for class_id, class_data in db.items():
             existing = supabase.table("classes").select("id").eq("id", class_id).execute()
@@ -268,9 +257,6 @@ def save_db(db):
     except Exception as e:
         st.error(f"Erreur de sauvegarde : {e}")
 # ========================= PARTIE 2 =========================
-# Header, sidebar, initialisation session, onglets Accueil et Créer une classe
-
-# ── Initialisation de la session ───────────────────────────────────────
 if "db" not in st.session_state:
     st.session_state.db = load_db()
 if "selected_class" not in st.session_state:
@@ -280,7 +266,6 @@ if "confirm_delete" not in st.session_state:
 
 db = st.session_state.db
 
-# ── HEADER ──────────────────────────────────────────────────────────────
 st.markdown("""
 <div class="app-header">
     <div class="app-tag">Outil Pédagogique</div>
@@ -289,7 +274,6 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ── SIDEBAR : liste des classes ─────────────────────────────────────────
 with st.sidebar:
     st.markdown("### 📂 Mes Classes")
     if db:
@@ -305,12 +289,8 @@ with st.sidebar:
         st.session_state.selected_class = "new"
         st.rerun()
 
-# ── TABS PRINCIPAL ──────────────────────────────────────────────────────
 tab_home, tab_new, tab_class = st.tabs(["🏠 Accueil", "➕ Créer une classe", "📋 Gérer la classe"])
 
-# ════════════════════════════════════════════════════════════════════════
-# TAB ACCUEIL
-# ════════════════════════════════════════════════════════════════════════
 with tab_home:
     if not db:
         st.markdown("""
@@ -359,9 +339,6 @@ with tab_home:
             )
         st.markdown('</div>', unsafe_allow_html=True)
 
-# ════════════════════════════════════════════════════════════════════════
-# TAB CRÉER UNE CLASSE
-# ════════════════════════════════════════════════════════════════════════
 with tab_new:
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown('<div class="card-title">➕ Nouvelle Classe</div>', unsafe_allow_html=True)
@@ -445,13 +422,10 @@ with tab_new:
 
     st.markdown('</div>', unsafe_allow_html=True)
 # ========================= PARTIE 3a =========================
-# Onglet Gérer la classe – Saisie Notes (cartes style image)
-
 with tab_class:
     if not db:
         st.info("Aucune classe disponible. Créez-en une d'abord.")
     else:
-        # Sélecteur de classe
         classe_options = {cid: cls["nom"] + " — " + cls["annee"] for cid, cls in db.items()}
         selected = st.selectbox("Choisir une classe", options=list(classe_options.keys()),
                                 format_func=lambda x: classe_options[x],
@@ -460,10 +434,8 @@ with tab_class:
         st.session_state.selected_class = selected
         cls = db[selected]
 
-        # ── Sous-tabs
         stab1, stab2, stab3, stab4 = st.tabs(["⚡ Saisie Notes", "📊 Classement", "📜 Historique", "⚙️ Gérer"])
 
-        # ── SOUS-TAB 1 : Saisie des notes ──────────────────────────────
         with stab1:
             st.markdown('<div class="card">', unsafe_allow_html=True)
             st.markdown(
@@ -485,7 +457,6 @@ with tab_class:
             c4.metric("Plus bas", min(scores) if scores else 0)
             st.markdown("---")
 
-            # Note globale
             st.markdown("**Note globale (toute la classe)**")
             col_g1, col_g2, col_g3, col_g4 = st.columns([1,1,1,3])
             note_globale = None
@@ -517,120 +488,88 @@ with tab_class:
             st.markdown("---")
             st.markdown("**Notes individuelles**")
 
-            # Afficher chaque étudiant avec une carte améliorée
             for eid, etudiant in sorted(etudiants.items(), key=lambda x: x[1]["nom"]):
                 score = etudiant["score"]
                 mention, m_cls = get_mention(score)
 
-                # Récupérer les 3 dernières notes
                 historique = etudiant["historique"]
                 last_notes = [h["note"] for h in historique[-3:]] if historique else []
-                # Pour correspondre à l'image, on peut aussi afficher les notes sous forme D1, D2, D3
-                # On va créer une liste de 3 éléments (ou moins)
-                d1 = last_notes[0] if len(last_notes) >= 1 else None
-                d2 = last_notes[1] if len(last_notes) >= 2 else None
-                d3 = last_notes[2] if len(last_notes) >= 3 else None
-
-                # Calcul de la progression entre la première et la dernière des 3 dernières
-                if d1 is not None and d3 is not None:
-                    prog = d3 - d1
-                elif d1 is not None and d2 is not None:
-                    prog = d2 - d1
-                else:
-                    prog = 0
-
-                # Tendance
-                if prog > 0:
-                    trend_text = "📈 En progression"
+                net_change = sum(last_notes)
+                if net_change > 0:
+                    trend = "📈 En progression"
                     trend_class = "trend-up"
-                elif prog < 0:
-                    trend_text = "📉 En baisse"
+                elif net_change < 0:
+                    trend = "📉 En baisse"
                     trend_class = "trend-down"
                 else:
-                    trend_text = "➡️ Stable"
+                    trend = "➡️ Stable"
                     trend_class = "trend-stable"
 
-                # Affichage de la carte
                 st.markdown('<div class="student-card">', unsafe_allow_html=True)
 
-                # Ligne supérieure : nom + badge tendance
-                st.markdown(f"""
-                <div class="card-header">
-                    <div class="student-name">{etudiant["nom"]}</div>
-                    <div class="trend-badge {trend_class}">{trend_text}</div>
-                </div>
-                """, unsafe_allow_html=True)
+                col_left, col_right = st.columns([2, 1])
 
-                # Ligne D1 D2 D3 avec flèches
-                notes_html = '<div class="notes-row">'
-                if d1 is not None:
-                    notes_html += f'<span class="note-item">D1: {d1:+d}</span>'
-                if d2 is not None:
-                    notes_html += '<span class="arrow">→</span>'
-                    notes_html += f'<span class="note-item">D2: {d2:+d}</span>'
-                if d3 is not None:
-                    notes_html += '<span class="arrow">→</span>'
-                    notes_html += f'<span class="note-item">D3: {d3:+d}</span>'
-                notes_html += '</div>'
-                st.markdown(notes_html, unsafe_allow_html=True)
+                with col_left:
+                    st.markdown(f'<div class="student-name-large">{etudiant["nom"]}</div>', unsafe_allow_html=True)
+                    st.markdown(
+                        f'<div class="student-score-large">{score} '
+                        f'<span class="mention-badge {m_cls}">{mention}</span></div>',
+                        unsafe_allow_html=True
+                    )
 
-                # Act et Prog
-                prog_class = "prog negative" if prog < 0 else "prog"
-                st.markdown(f"""
-                <div class="act-prog">
-                    <span class="act">Act: {score:+d}</span>
-                    <span class="{prog_class}">Prog: {prog:+d} pts</span>
-                </div>
-                """, unsafe_allow_html=True)
+                    if last_notes:
+                        badges = []
+                        for n in last_notes:
+                            if n > 0:
+                                badges.append(f'<span class="note-badge note-1">+{n}</span>')
+                            elif n == 0:
+                                badges.append(f'<span class="note-badge note-0">0</span>')
+                            else:
+                                badges.append(f'<span class="note-badge note--1">{n}</span>')
+                        st.markdown(
+                            f'<div class="recent-notes">Dernières notes : {" ".join(badges)}</div>',
+                            unsafe_allow_html=True
+                        )
 
-                # Score final et mention
-                st.markdown(f"""
-                <div class="score-final">{score} /20</div>
-                <div class="mention {m_cls}">{mention}</div>
-                """, unsafe_allow_html=True)
+                    st.markdown(f'<div class="trend {trend_class}">{trend}</div>', unsafe_allow_html=True)
 
-                # Boutons de notation
-                col_btn1, col_btn2, col_btn3 = st.columns([1,1,1])
-                with col_btn1:
-                    if st.button("➕ +1", key=f"p_{eid}", use_container_width=True):
-                        motif = st.session_state.get(f"motif_{eid}", "")
-                        ts = datetime.now().strftime("%d/%m/%Y %H:%M")
-                        etudiants[eid]["score"] += 1
-                        etudiants[eid]["historique"].append({"note":1,"motif":motif,"date":ts,"type":"indiv"})
-                        save_db(db)
-                        st.rerun()
-                with col_btn2:
-                    if st.button("⓪ 0", key=f"z_{eid}", use_container_width=True):
-                        motif = st.session_state.get(f"motif_{eid}", "")
-                        ts = datetime.now().strftime("%d/%m/%Y %H:%M")
-                        etudiants[eid]["historique"].append({"note":0,"motif":motif,"date":ts,"type":"indiv"})
-                        save_db(db)
-                        st.rerun()
-                with col_btn3:
-                    if st.button("➖ -1", key=f"m_{eid}", use_container_width=True):
-                        motif = st.session_state.get(f"motif_{eid}", "")
-                        ts = datetime.now().strftime("%d/%m/%Y %H:%M")
-                        etudiants[eid]["score"] -= 1
-                        etudiants[eid]["historique"].append({"note":-1,"motif":motif,"date":ts,"type":"indiv"})
-                        save_db(db)
-                        st.rerun()
+                with col_right:
+                    btns = st.columns(3)
+                    with btns[0]:
+                        if st.button("➕ +1", key=f"p_{eid}", use_container_width=True):
+                            motif = st.session_state.get(f"motif_{eid}", "")
+                            ts = datetime.now().strftime("%d/%m/%Y %H:%M")
+                            etudiants[eid]["score"] += 1
+                            etudiants[eid]["historique"].append({"note":1,"motif":motif,"date":ts,"type":"indiv"})
+                            save_db(db)
+                            st.rerun()
+                    with btns[1]:
+                        if st.button("⓪ 0", key=f"z_{eid}", use_container_width=True):
+                            motif = st.session_state.get(f"motif_{eid}", "")
+                            ts = datetime.now().strftime("%d/%m/%Y %H:%M")
+                            etudiants[eid]["historique"].append({"note":0,"motif":motif,"date":ts,"type":"indiv"})
+                            save_db(db)
+                            st.rerun()
+                    with btns[2]:
+                        if st.button("➖ -1", key=f"m_{eid}", use_container_width=True):
+                            motif = st.session_state.get(f"motif_{eid}", "")
+                            ts = datetime.now().strftime("%d/%m/%Y %H:%M")
+                            etudiants[eid]["score"] -= 1
+                            etudiants[eid]["historique"].append({"note":-1,"motif":motif,"date":ts,"type":"indiv"})
+                            save_db(db)
+                            st.rerun()
 
-                # Champ motif
-                st.text_input(
-                    "Motif",
-                    key=f"motif_{eid}",
-                    label_visibility="collapsed",
-                    placeholder="Motif (optionnel)",
-                    help="Raison de la note"
-                )
+                    st.text_input(
+                        "Motif",
+                        key=f"motif_{eid}",
+                        label_visibility="collapsed",
+                        placeholder="Motif (optionnel)"
+                    )
 
                 st.markdown('</div>', unsafe_allow_html=True)
 
             st.markdown('</div>', unsafe_allow_html=True)
 # ========================= PARTIE 3b =========================
-# Onglet Gérer la classe – Classement, Historique, Gérer et Footer
-
-        # ── SOUS-TAB 2 : Classement ─────────────────────────────────────
         with stab2:
             st.markdown('<div class="card">', unsafe_allow_html=True)
             st.markdown('<div class="card-title">📊 Classement — ' + cls["nom"] + '</div>', unsafe_allow_html=True)
@@ -675,7 +614,6 @@ with tab_class:
             st.markdown(table_html, unsafe_allow_html=True)
             st.markdown("---")
 
-            # Export Excel et PDF (identique à l'original)
             dl1, dl2 = st.columns(2)
             with dl1:
                 st.markdown('<div class="dl-excel">', unsafe_allow_html=True)
@@ -748,7 +686,6 @@ with tab_class:
                     GREEN = rl_colors.HexColor("#E8F5E9")
                     RED   = rl_colors.HexColor("#FFEBEE")
 
-                    # Police arabe
                     ar_font = "Helvetica"
                     try:
                         script_dir = _os.path.dirname(_os.path.abspath(__file__)) if "__file__" in dir() else "/mount/src/gestion-classe"
@@ -835,7 +772,6 @@ with tab_class:
 
             st.markdown('</div>', unsafe_allow_html=True)
 
-        # ── SOUS-TAB 3 : Historique ─────────────────────────────────────
         with stab3:
             st.markdown('<div class="card">', unsafe_allow_html=True)
             st.markdown('<div class="card-title">📜 Historique des notes</div>', unsafe_allow_html=True)
@@ -887,14 +823,12 @@ with tab_class:
 
             st.markdown('</div>', unsafe_allow_html=True)
 
-        # ── SOUS-TAB 4 : Gérer ─────────────────────────────────────────
         with stab4:
             st.markdown('<div class="card">', unsafe_allow_html=True)
             st.markdown('<div class="card-title">⚙️ Gestion de la classe — ' + cls["nom"] + '</div>', unsafe_allow_html=True)
 
             etudiants = cls["etudiants"]
 
-            # Modifier un étudiant
             st.markdown("**✏️ Modifier un étudiant**")
             eid_to_edit = st.selectbox("Étudiant à modifier",
                                         options=list(etudiants.keys()),
@@ -916,7 +850,6 @@ with tab_class:
 
             st.markdown("---")
 
-            # Ajouter un étudiant
             st.markdown("**➕ Ajouter un étudiant**")
             col_add1, col_add2 = st.columns([4,1])
             with col_add1:
@@ -933,7 +866,6 @@ with tab_class:
 
             st.markdown("---")
 
-            # Supprimer un étudiant
             st.markdown("**🗑️ Supprimer un étudiant**")
             eid_to_del = st.selectbox("Étudiant à supprimer",
                                        options=list(etudiants.keys()),
@@ -959,7 +891,6 @@ with tab_class:
 
             st.markdown("---")
 
-            # Supprimer toute la classe
             st.markdown("**⛔ Supprimer toute la classe**")
             if st.button("⛔ Supprimer la classe " + cls["nom"], key="del_class"):
                 st.session_state.confirm_delete = "CLASS_" + selected
