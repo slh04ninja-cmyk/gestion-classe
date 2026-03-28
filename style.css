@@ -1,0 +1,160 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+
+:root {
+    --teal:    #00796B;
+    --teal2:   #004D40;
+    --mint:    #E0F2F1;
+    --gold:    #FF8F00;
+    --red:     #C62828;
+    --green:   #2E7D32;
+    --bg:      #F4F7F6;
+    --card:    #FFFFFF;
+    --text:    #1A2E2A;
+    --muted:   #546E6A;
+    --border:  #C8D8D5;
+}
+
+* { font-family: 'Nunito', sans-serif; color: var(--text); }
+
+.stApp {
+    background: var(--bg);
+    background-image:
+        radial-gradient(circle at 5% 10%, rgba(0,121,107,0.07) 0%, transparent 50%),
+        radial-gradient(circle at 95% 90%, rgba(255,143,0,0.05) 0%, transparent 50%);
+}
+
+/* Header */
+.app-header {
+    background: linear-gradient(135deg, var(--teal2) 0%, var(--teal) 100%);
+    border-radius: 20px; padding: 28px 36px 24px;
+    margin-bottom: 24px; position: relative; overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,77,64,0.25);
+}
+.app-header::after {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 4px;
+    background: linear-gradient(90deg, var(--gold), transparent);
+}
+.app-tag   { font-size:11px; font-weight:800; letter-spacing:4px; color:rgba(255,255,255,0.5); text-transform:uppercase; margin-bottom:5px; }
+.app-title { font-size:30px; font-weight:900; color:#fff; line-height:1.1; margin:0; }
+.app-sub   { font-size:13px; color:rgba(255,255,255,0.6); margin-top:6px; }
+
+/* Cards générales */
+.card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 24px; margin-bottom: 16px;
+    box-shadow: 0 2px 12px rgba(0,77,64,0.06);
+}
+.card-title {
+    font-size:16px; font-weight:800; color:var(--teal2);
+    border-bottom: 2px solid var(--mint);
+    padding-bottom:10px; margin-bottom:16px;
+}
+
+/* Cartes étudiant simplifiées */
+.student-card {
+    background: #FFFFFF;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+.student-card:hover {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.student-info {
+    display: flex;
+    align-items: baseline;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+.student-name {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--teal2);
+}
+.student-score {
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--teal2);
+    margin-left: 8px;
+}
+.mention-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 30px;
+    font-size: 12px;
+    font-weight: 800;
+    background: #E0F2F1;
+    color: #00796B;
+}
+.mention-badge.m-tb { background: #E8F5E9; color: #1B5E20; }
+.mention-badge.m-b  { background: #E3F2FD; color: #0D47A1; }
+.mention-badge.m-ab { background: #FFF8E1; color: #7B5800; }
+.mention-badge.m-p  { background: #FFF3E0; color: #E65100; }
+.mention-badge.m-ec { background: #FFEBEE; color: #B71C1C; }
+
+/* Boutons */
+.btn-group {
+    display: flex;
+    gap: 8px;
+}
+.btn-group .stButton button {
+    border-radius: 40px !important;
+    font-weight: 800 !important;
+    font-size: 16px !important;
+    padding: 8px 20px !important;
+    border: none !important;
+    min-width: 70px;
+}
+.btn-plus { background-color: var(--green) !important; color: white !important; }
+.btn-moins { background-color: var(--red) !important; color: white !important; }
+
+/* Tabs */
+.stTabs [data-baseweb="tab-list"] {
+    background: var(--mint); border-radius:12px; padding:4px; gap:4px;
+    border:none; margin-bottom:16px;
+}
+.stTabs [data-baseweb="tab"] {
+    border-radius:8px; font-weight:800; font-size:13px; color:var(--muted);
+    padding:9px 18px; border:none; background:transparent;
+}
+.stTabs [aria-selected="true"] { background:var(--teal) !important; color:white !important; }
+.stTabs [data-baseweb="tab-border"] { display:none; }
+
+/* Inputs */
+.stTextInput input, .stSelectbox select, .stNumberInput input {
+    border-radius:8px !important; border-color:var(--border) !important;
+    color:var(--text) !important; background:#fff !important;
+    font-weight:600 !important;
+}
+.stTextInput label, .stSelectbox label, .stNumberInput label,
+.stTextArea label { font-weight:700 !important; color:var(--text) !important; }
+
+/* Download buttons */
+.stDownloadButton > button {
+    background:white !important; border-radius:10px !important;
+    font-weight:700 !important; font-size:13px !important; width:100%; margin-top:6px;
+}
+.dl-excel .stDownloadButton > button { color:var(--teal) !important; border:2px solid var(--teal) !important; }
+.dl-pdf   .stDownloadButton > button { color:var(--red) !important;  border:2px solid var(--red)  !important; }
+
+/* Metrics */
+[data-testid="metric-container"] {
+    background:var(--mint); border-radius:10px; padding:12px 16px !important; border:1px solid var(--border);
+}
+[data-testid="stMetricLabel"] p  { color:#333 !important; font-weight:700 !important; font-size:12px !important; }
+[data-testid="stMetricValue"] div{ color:var(--teal2) !important; font-weight:900 !important; font-size:22px !important; }
+
+hr { border-color:var(--border) !important; margin:16px 0 !important; }
+.app-footer { text-align:center; padding:16px; color:var(--muted); font-size:11px; margin-top:24px; border-top:1px solid var(--border); }
+.badge { display:inline-block; background:var(--mint); color:var(--teal2); font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px; border:1px solid var(--border); }
+#MainMenu, footer, header { visibility:hidden; }
+.block-container { padding-top:2rem; }
