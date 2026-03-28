@@ -60,57 +60,64 @@
 .student-card {
     background: #FFFFFF;
     border-radius: 24px;
-    border: 1px solid rgba(0,121,107,0.1);
+    border: 1px solid #C8D8D5;
     box-shadow: 0 6px 18px rgba(0,0,0,0.05);
     padding: 20px 24px;
     margin-bottom: 16px;
-    transition: all 0.2s ease;
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 16px;
-}
-.student-card:hover {
-    box-shadow: 0 12px 28px rgba(0,0,0,0.08);
-    transform: translateY(-2px);
+    align-items: center;
 }
 
-/* Conteneur informations gauche */
 .student-info {
     display: flex;
-    align-items: baseline;
     gap: 20px;
-    flex-wrap: wrap;
+    align-items: center;
 }
+
 .student-name {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 800;
-    color: var(--teal2);
-    letter-spacing: -0.3px;
+    color: #004D40;
 }
+
 .student-score {
-    font-size: 32px;
+    font-size: 30px;
     font-weight: 900;
-    color: var(--teal2);
-    line-height: 1;
+    color: #004D40;
 }
+
 .mention-badge {
-    display: inline-block;
     padding: 6px 14px;
     border-radius: 40px;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 800;
-    background: #E0F2F1;
-    color: #00796B;
-    letter-spacing: 0.3px;
+    background: #FFEBEE;
+    color: #C62828;
 }
-.mention-badge.m-tb { background: #E8F5E9; color: #1B5E20; }
-.mention-badge.m-b  { background: #E3F2FD; color: #0D47A1; }
-.mention-badge.m-ab { background: #FFF8E1; color: #7B5800; }
-.mention-badge.m-p  { background: #FFF3E0; color: #E65100; }
-.mention-badge.m-ec { background: #FFEBEE; color: #B71C1C; }
 
+.btn-group {
+    display: flex;
+    gap: 10px;
+}
+
+.btn {
+    border: none;
+    border-radius: 40px;
+    font-weight: 800;
+    padding: 10px 20px;
+    cursor: pointer;
+}
+
+.btn-plus {
+    background: #2E7D32;
+    color: white;
+}
+
+.btn-moins {
+    background: #C62828;
+    color: white;
+}
 /* Forcer les colonnes des boutons à rester côte à côte */
 .student-card .stColumns {
     display: flex !important;
