@@ -1,13 +1,12 @@
-# ========================= APP VERSION PRO =========================
+# ========================= GESTION DE CLASSE PRO =========================
 import streamlit as st
 from datetime import datetime
-import io
 
 st.set_page_config(
     page_title="Gestion de Classe PRO",
     page_icon="📚",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
 )
 
 # ──────────── LOAD CSS ────────────
@@ -15,46 +14,64 @@ with open("style.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
 # ──────────── SESSION STATE INIT ────────────
-if "etudiants" not in st.session_state:
-    st.session_state.etudiants = {
-        "1": {
-            "nom": "Ahmed Benali",
-            "score": 12,
-            "historique": [
-                {"note": 3, "date": "01/04/2026 09:15"},
-                {"note": 5, "date": "02/04/2026 10:30"},
-                {"note": 4, "date": "03/04/2026 08:00"},
-            ],
+if "classes" not in st.session_state:
+    st.session_state.classes = {
+        "1A": {
+            "nom": "1ère Année — Informatique",
+            "etudiants": {
+                "1A-1": {
+                    "nom": "Ahmed Benali",
+                    "score": 12,
+                    "historique": [
+                        {"note": 3, "date": "01/04/2026 09:15"},
+                        {"note": 5, "date": "02/04/2026 10:30"},
+                        {"note": 4, "date": "03/04/2026 08:00"},
+                    ],
+                },
+                "1A-2": {
+                    "nom": "Fatima Zahra",
+                    "score": 3,
+                    "historique": [
+                        {"note": 2, "date": "01/04/2026 09:20"},
+                        {"note": 1, "date": "02/04/2026 10:35"},
+                    ],
+                },
+                "1A-3": {
+                    "nom": "Youssef Alami",
+                    "score": 18,
+                    "historique": [
+                        {"note": 6, "date": "01/04/2026 09:10"},
+                        {"note": 5, "date": "02/04/2026 10:25"},
+                        {"note": 4, "date": "03/04/2026 08:05"},
+                        {"note": 3, "date": "04/04/2026 11:00"},
+                    ],
+                },
+            },
         },
-        "2": {
-            "nom": "Fatima Zahra",
-            "score": 3,
-            "historique": [
-                {"note": 2, "date": "01/04/2026 09:20"},
-                {"note": 1, "date": "02/04/2026 10:35"},
-            ],
-        },
-        "3": {
-            "nom": "Youssef Alami",
-            "score": 18,
-            "historique": [
-                {"note": 6, "date": "01/04/2026 09:10"},
-                {"note": 5, "date": "02/04/2026 10:25"},
-                {"note": 4, "date": "03/04/2026 08:05"},
-                {"note": 3, "date": "04/04/2026 11:00"},
-            ],
-        },
-        "4": {
-            "nom": "Sara Mansouri",
-            "score": 7,
-            "historique": [
-                {"note": 4, "date": "02/04/2026 11:00"},
-                {"note": 3, "date": "03/04/2026 09:15"},
-            ],
+        "2B": {
+            "nom": "2ème Année — Mathématiques",
+            "etudiants": {
+                "2B-1": {
+                    "nom": "Sara Mansouri",
+                    "score": 7,
+                    "historique": [
+                        {"note": 4, "date": "02/04/2026 11:00"},
+                        {"note": 3, "date": "03/04/2026 09:15"},
+                    ],
+                },
+                "2B-2": {
+                    "nom": "Karim Haddad",
+                    "score": 14,
+                    "historique": [
+                        {"note": 7, "date": "01/04/2026 08:00"},
+                        {"note": 7, "date": "03/04/2026 10:00"},
+                    ],
+                },
+            },
         },
     }
 
-etudiants = st.session_state.etudiants
+classes = st.session_state.classes
 
 
 # ──────────── HELPERS ────────────
@@ -73,56 +90,89 @@ def get_initials(nom):
     return nom[0:2].upper()
 
 
-def get_total_positive(eid):
-    return sum(h["note"] for h in etudiants[eid]["historique"] if h["note"] > 0)
-
-
-def get_total_negative(eid):
-    return sum(h["note"] for h in etudiants[eid]["historique"] if h["note"] < 0)
-
-
 def export_csv():
-    lines = ["Nom,Score,Mention"]
-    for eid, e in etudiants.items():
-        mention, _ = get_mention(e["score"])
-        lines.append(f'"{e["nom"]}",{e["score"]},{mention}')
+    lines = ["Classe,Nom,Score,Mention"]
+    for cid, c in classes.items():
+        for eid, e in c["etudiants"].items():
+            mention, _ = get_mention(e["score"])
+            lines.append(f'"{c["nom"]}","{e["nom"]}",{e["score"]},{mention}')
     return "\n".join(lines).encode("utf-8")
 
 
 def export_history_csv():
-    lines = ["Nom,Note,Date"]
-    for eid, e in etudiants.items():
-        for h in e["historique"]:
-            lines.append(f'"{e["nom"]}",{h["note"]},"{h["date"]}"')
+    lines = ["Classe,Nom,Note,Date"]
+    for cid, c in classes.items():
+        for eid, e in c["etudiants"].items():
+            for h in e["historique"]:
+                lines.append(f'"{c["nom"]}","{e["nom"]}",{h["note"]},"{h["date"]}"')
     return "\n".join(lines).encode("utf-8")
 
 
 # ──────────── SIDEBAR ────────────
 with st.sidebar:
-    st.markdown("## Ajouter un étudiant")
-    with st.form("add_student_form", clear_on_submit=True):
-        new_name = st.text_input("Nom complet", placeholder="Ex: Karim Haddad")
-        new_score = st.number_input("Score initial", value=0, step=1)
-        submitted = st.form_submit_button("Ajouter")
+    st.markdown("## Gestion")
 
-        if submitted and new_name.strip():
-            new_id = str(max(int(k) for k in etudiants.keys()) + 1) if etudiants else "1"
-            etudiants[new_id] = {
-                "nom": new_name.strip(),
-                "score": int(new_score),
-                "historique": [],
-            }
-            st.success(f"**{new_name.strip()}** ajouté avec succès !")
-            st.rerun()
+    # ── Ajouter une classe ──
+    with st.expander("Ajouter une classe", expanded=True):
+        with st.form("form_add_class", clear_on_submit=True):
+            class_id = st.text_input("Code classe", placeholder="Ex: 3C")
+            class_name = st.text_input("Nom de la classe", placeholder="Ex: 3ème Année — Physique")
+            if st.form_submit_button("Créer la classe"):
+                if class_id.strip() and class_name.strip():
+                    cid = class_id.strip().upper()
+                    if cid not in classes:
+                        classes[cid] = {"nom": class_name.strip(), "etudiants": {}}
+                        st.success(f"Classe **{cid}** créée !")
+                        st.rerun()
+                    else:
+                        st.error(f"La classe **{cid}** existe déjà.")
+
+    # ── Ajouter un étudiant ──
+    if classes:
+        with st.expander("Ajouter un étudiant", expanded=True):
+            with st.form("form_add_student", clear_on_submit=True):
+                target_class = st.selectbox(
+                    "Classe",
+                    options=list(classes.keys()),
+                    format_func=lambda x: f"{x} — {classes[x]['nom']}",
+                )
+                new_name = st.text_input("Nom complet", placeholder="Ex: Karim Haddad")
+                new_score = st.number_input("Score initial", value=0, step=1)
+                if st.form_submit_button("Ajouter l'étudiant"):
+                    if new_name.strip():
+                        etuds = classes[target_class]["etudiants"]
+                        new_eid = f"{target_class}-{len(etuds) + 1}"
+                        etuds[new_eid] = {
+                            "nom": new_name.strip(),
+                            "score": int(new_score),
+                            "historique": [],
+                        }
+                        st.success(f"**{new_name.strip()}** ajouté en **{target_class}** !")
+                        st.rerun()
+
+    # ── Supprimer une classe ──
+    if classes:
+        with st.expander("Supprimer une classe"):
+            del_class = st.selectbox(
+                "Choisir la classe",
+                options=list(classes.keys()),
+                format_func=lambda x: f"{x} — {classes[x]['nom']}",
+                key="del_class_select",
+            )
+            if st.button("Supprimer cette classe", type="primary"):
+                del classes[del_class]
+                st.success(f"Classe **{del_class}** supprimée.")
+                st.rerun()
 
     st.markdown("---")
-    st.markdown("## Exporter les données")
 
+    # ── Export ──
+    st.markdown("## Exporter")
     col_dl1, col_dl2 = st.columns(2)
     with col_dl1:
         st.markdown('<div class="dl-excel">', unsafe_allow_html=True)
         st.download_button(
-            label="Scores (CSV)",
+            "Scores (CSV)",
             data=export_csv(),
             file_name="scores.csv",
             mime="text/csv",
@@ -132,7 +182,7 @@ with st.sidebar:
     with col_dl2:
         st.markdown('<div class="dl-pdf">', unsafe_allow_html=True)
         st.download_button(
-            label="Historique (CSV)",
+            "Historique (CSV)",
             data=export_history_csv(),
             file_name="historique.csv",
             mime="text/csv",
@@ -140,24 +190,25 @@ with st.sidebar:
         )
         st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown("---")
-    st.markdown("## Réinitialiser")
-    if st.button("Tout effacer", use_container_width=True):
-        st.session_state.etudiants = {}
-        st.rerun()
 
+# ──────────── COMPUTE GLOBAL STATS ────────────
+all_students = []
+for c in classes.values():
+    for e in c["etudiants"].values():
+        all_students.append(e)
+
+total_students = len(all_students)
+avg_score = sum(e["score"] for e in all_students) / total_students if total_students else 0
+passed = sum(1 for e in all_students if e["score"] >= 10)
+failed = total_students - passed
 
 # ──────────── HEADER ────────────
-total_students = len(etudiants)
-avg_score = sum(e["score"] for e in etudiants.values()) / total_students if total_students else 0
-passed = sum(1 for e in etudiants.values() if e["score"] >= 10)
-
 st.markdown(
     f"""
     <div class="app-header">
         <div class="app-tag">Système de gestion</div>
         <div class="app-title">Gestion de Classe PRO</div>
-        <div class="app-sub">Suivi des scores et performances des étudiants</div>
+        <div class="app-sub">Suivi des scores et performances — {len(classes)} classe(s), {total_students} étudiant(s)</div>
         <div class="header-stats">
             <div class="header-stat">
                 <div class="header-stat-val">{total_students}</div>
@@ -172,7 +223,7 @@ st.markdown(
                 <div class="header-stat-label">Réussite</div>
             </div>
             <div class="header-stat">
-                <div class="header-stat-val">{total_students - passed}</div>
+                <div class="header-stat-val">{failed}</div>
                 <div class="header-stat-label">Échec</div>
             </div>
         </div>
@@ -183,103 +234,110 @@ st.markdown(
 
 
 # ──────────── TABS ────────────
-tab_list, tab_stats, tab_history = st.tabs(
-    ["Liste des étudiants", "Statistiques", "Historique complet"]
+tab_classes, tab_stats, tab_history = st.tabs(
+    ["Classes & Étudiants", "Statistiques", "Historique"]
 )
 
 
 # ════════════════════════════════════════════
-# TAB 1 : LISTE DES ÉTUDIANTS
+# TAB 1 : CLASSES & ÉTUDIANTS
 # ════════════════════════════════════════════
-with tab_list:
-    if not etudiants:
+with tab_classes:
+    if not classes:
         st.markdown(
             """
             <div class="empty-state">
                 <div class="empty-state-icon">📭</div>
-                <div class="empty-state-text">Aucun étudiant enregistré</div>
+                <div class="empty-state-text">Aucune classe enregistrée</div>
             </div>
             """,
             unsafe_allow_html=True,
         )
     else:
-        # Sort by score descending
-        sorted_students = sorted(etudiants.items(), key=lambda x: x[1]["score"], reverse=True)
-
-        for rank, (eid, etudiant) in enumerate(sorted_students, 1):
-            score = etudiant["score"]
-            mention, mention_class = get_mention(score)
-            initials = get_initials(etudiant["nom"])
-            total_pos = get_total_positive(eid)
-            total_neg = get_total_negative(eid)
-            last_activity = etudiant["historique"][-1]["date"] if etudiant["historique"] else "—"
+        for cid, classe in classes.items():
+            etudiants = classe["etudiants"]
+            nb = len(etudiants)
+            moyenne = sum(e["score"] for e in etudiants.values()) / nb if nb else 0
 
             st.markdown(
                 f"""
-                <div class="student-card {mention_class}">
-                    <div class="student-info">
-                        <div class="student-avatar">{initials}</div>
-                        <div class="student-details">
-                            <div class="student-name">#{rank} {etudiant["nom"]}</div>
-                            <div class="student-meta">
-                                Dernière activité : {last_activity}
-                                &nbsp;·&nbsp;
-                                <span style="color:#2E7D32">+{total_pos}</span>
-                                &nbsp;/&nbsp;
-                                <span style="color:#D32F2F">{total_neg}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="student-right">
-                        <div class="student-score-wrap">
-                            <div class="student-score">{score}</div>
-                            <div class="student-score-label">points</div>
-                        </div>
-                        <span class="mention-badge mention-{mention_class}">{mention}</span>
-                    </div>
+                <div class="card-title">{cid} — {classe["nom"]}
+                    <span style="margin-left:auto; font-size:12px; font-weight:600; color:var(--muted);">
+                        {nb} étudiant(s) · Moyenne {moyenne:.1f}
+                    </span>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
 
-            # Action buttons
-            col_btn1, col_btn2, col_spacer, col_del = st.columns([1, 1, 4, 1.5])
+            if not etudiants:
+                st.info("Aucun étudiant dans cette classe.")
+                continue
 
-            with col_btn1:
-                if st.button("+1", key=f"plus_{eid}", use_container_width=True):
-                    etudiants[eid]["score"] += 1
-                    etudiants[eid]["historique"].append(
-                        {"note": 1, "date": datetime.now().strftime("%d/%m/%Y %H:%M")}
-                    )
-                    st.rerun()
+            sorted_etuds = sorted(etudiants.items(), key=lambda x: x[1]["score"], reverse=True)
 
-            with col_btn2:
-                if st.button("−1", key=f"moins_{eid}", use_container_width=True):
-                    etudiants[eid]["score"] -= 1
-                    etudiants[eid]["historique"].append(
-                        {"note": -1, "date": datetime.now().strftime("%d/%m/%Y %H:%M")}
-                    )
-                    st.rerun()
+            for rank, (eid, etudiant) in enumerate(sorted_etuds, 1):
+                score = etudiant["score"]
+                mention, mention_class = get_mention(score)
+                initials = get_initials(etudiant["nom"])
 
-            with col_del:
-                st.markdown('<div class="delete-btn">', unsafe_allow_html=True)
-                if st.button("Supprimer", key=f"del_{eid}", use_container_width=True):
-                    del etudiants[eid]
-                    st.rerun()
-                st.markdown("</div>", unsafe_allow_html=True)
+                # ── Card HTML ──
+                st.markdown(
+                    f"""
+                    <div class="student-card {mention_class}">
+                        <div class="student-info">
+                            <div class="student-avatar">{initials}</div>
+                            <div class="student-details">
+                                <div class="student-name">#{rank} {etudiant["nom"]}</div>
+                                <div class="student-meta">ID : {eid}</div>
+                            </div>
+                        </div>
+                        <div class="student-right">
+                            <div class="student-score-wrap">
+                                <div class="student-score">{score}</div>
+                                <div class="student-score-label">points</div>
+                            </div>
+                            <span class="mention-badge mention-{mention_class}">{mention}</span>
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+                # ── Boutons +1 et -1 sur la même ligne ──
+                col_plus, col_moins = st.columns(2)
+                with col_plus:
+                    st.markdown('<div class="btn-plus">', unsafe_allow_html=True)
+                    if st.button("+1", key=f"plus_{eid}", use_container_width=True):
+                        etudiants[eid]["score"] += 1
+                        etudiants[eid]["historique"].append(
+                            {"note": 1, "date": datetime.now().strftime("%d/%m/%Y %H:%M")}
+                        )
+                        st.rerun()
+                    st.markdown("</div>", unsafe_allow_html=True)
+                with col_moins:
+                    st.markdown('<div class="btn-moins">', unsafe_allow_html=True)
+                    if st.button("−1", key=f"moins_{eid}", use_container_width=True):
+                        etudiants[eid]["score"] -= 1
+                        etudiants[eid]["historique"].append(
+                            {"note": -1, "date": datetime.now().strftime("%d/%m/%Y %H:%M")}
+                        )
+                        st.rerun()
+                    st.markdown("</div>", unsafe_allow_html=True)
 
 
 # ════════════════════════════════════════════
 # TAB 2 : STATISTIQUES
 # ════════════════════════════════════════════
 with tab_stats:
-    if not etudiants:
+    if not all_students:
         st.info("Ajoutez des étudiants pour voir les statistiques.")
     else:
-        scores = [e["score"] for e in etudiants.values()]
+        scores = [e["score"] for e in all_students]
         max_score = max(scores)
         min_score = min(scores)
-        median_score = sorted(scores)[len(scores) // 2]
+        sorted_scores = sorted(scores)
+        median_score = sorted_scores[len(sorted_scores) // 2]
 
         col_m1, col_m2, col_m3, col_m4 = st.columns(4)
         with col_m1:
@@ -293,7 +351,6 @@ with tab_stats:
 
         st.markdown("---")
 
-        # Distribution
         st.markdown('<div class="card-title">Répartition des mentions</div>', unsafe_allow_html=True)
         excellent_count = sum(1 for s in scores if s >= 15)
         passable_count = sum(1 for s in scores if 10 <= s < 15)
@@ -333,52 +390,58 @@ with tab_stats:
 
         st.markdown("---")
 
-        # Classement
-        st.markdown('<div class="card-title">Classement</div>', unsafe_allow_html=True)
-        ranked = sorted(etudiants.items(), key=lambda x: x[1]["score"], reverse=True)
-        for pos, (eid, e) in enumerate(ranked, 1):
+        # ── Classement global ──
+        st.markdown('<div class="card-title">Classement global</div>', unsafe_allow_html=True)
+        ranked = sorted(all_students, key=lambda x: x["score"], reverse=True)
+        for pos, e in enumerate(ranked, 1):
             medal = "🥇" if pos == 1 else ("🥈" if pos == 2 else ("🥉" if pos == 3 else f"#{pos}"))
-            st.markdown(
-                f"**{medal}** &nbsp; {e['nom']} — **{e['score']} pts**"
-            )
+            st.markdown(f"**{medal}** &nbsp; {e['nom']} — **{e['score']} pts**")
 
 
 # ════════════════════════════════════════════
-# TAB 3 : HISTORIQUE COMPLET
+# TAB 3 : HISTORIQUE
 # ════════════════════════════════════════════
 with tab_history:
-    if not etudiants:
+    if not all_students:
         st.info("Aucun historique disponible.")
     else:
-        eid_selected = st.selectbox(
+        # Build a flat list for the selectbox
+        student_options = []
+        for cid, c in classes.items():
+            for eid, e in c["etudiants"].items():
+                student_options.append((eid, f"{e['nom']} ({cid})"))
+
+        selected = st.selectbox(
             "Sélectionner un étudiant",
-            options=list(etudiants.keys()),
-            format_func=lambda x: etudiants[x]["nom"],
+            options=[opt[0] for opt in student_options],
+            format_func=dict(student_options).get,
         )
 
-        if eid_selected:
-            e = etudiants[eid_selected]
-            mention, _ = get_mention(e["score"])
+        # Find the student
+        target = None
+        for c in classes.values():
+            if selected in c["etudiants"]:
+                target = c["etudiants"][selected]
+                break
+
+        if target:
+            mention, _ = get_mention(target["score"])
 
             col_h1, col_h2, col_h3 = st.columns(3)
             with col_h1:
-                st.metric("Score actuel", e["score"])
+                st.metric("Score actuel", target["score"])
             with col_h2:
-                st.metric("Total opérations", len(e["historique"]))
+                st.metric("Total opérations", len(target["historique"]))
             with col_h3:
                 st.metric("Mention", mention)
 
             st.markdown("---")
 
-            if not e["historique"]:
-                st.info("Aucune opération enregistrée pour cet étudiant.")
+            if not target["historique"]:
+                st.info("Aucune opération enregistrée.")
             else:
-                st.markdown(
-                    '<div class="card-title">Dernières opérations</div>',
-                    unsafe_allow_html=True,
-                )
-                # Show history in reverse chronological order
-                for h in reversed(e["historique"]):
+                st.markdown('<div class="card-title">Dernières opérations</div>', unsafe_allow_html=True)
+                for h in reversed(target["historique"]):
                     css_class = "positive" if h["note"] > 0 else "negative"
                     sign = "+" if h["note"] > 0 else ""
                     st.markdown(
@@ -396,9 +459,9 @@ with tab_history:
 st.markdown(
     """
     <div class="app-footer">
-        Gestion de Classe PRO &nbsp;·&nbsp; Année scolaire 2025–2026 &nbsp;·&nbsp; Développé avec Streamlit
+        Gestion de Classe PRO · Année scolaire 2025–2026 · Développé avec Streamlit
     </div>
     """,
     unsafe_allow_html=True,
-    )
-                         
+        )
+                        
